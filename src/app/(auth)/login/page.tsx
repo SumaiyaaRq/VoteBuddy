@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signInWithEmailAndPassword 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword
 } from "firebase/auth";
 import { auth } from "@/services/firebase/firebaseConfig";
 import { useRouter } from "next/navigation";
@@ -32,10 +32,24 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    // try {
+    //   await signInWithEmailAndPassword(auth, email, password);
+    //   router.push("/dashboard");
+    // } 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+
+      if (!user.emailVerified) {
+        setError("Please verify your email before logging in.");
+        return;
+      }
+
       router.push("/dashboard");
-    } catch (err: any) {
+
+    }
+    catch (err: any) {
       setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
@@ -43,10 +57,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ 
-      minHeight: "100vh", 
-      display: "flex", 
-      alignItems: "center", 
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
       justifyContent: "center",
       padding: "1rem"
     }}>
@@ -57,10 +71,10 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div style={{ 
-            padding: "0.75rem", 
-            background: "rgba(239, 68, 68, 0.1)", 
-            color: "var(--error)", 
+          <div style={{
+            padding: "0.75rem",
+            background: "rgba(239, 68, 68, 0.1)",
+            color: "var(--error)",
             borderRadius: "var(--radius-md)",
             marginBottom: "1rem",
             fontSize: "0.875rem",
@@ -73,8 +87,8 @@ export default function LoginPage() {
         <form onSubmit={handleEmailLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
@@ -92,8 +106,8 @@ export default function LoginPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -109,9 +123,9 @@ export default function LoginPage() {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={loading}
             style={{ marginTop: "0.5rem" }}
           >
@@ -125,12 +139,12 @@ export default function LoginPage() {
           <div style={{ flex: 1, height: "1px", background: "var(--glass-border)" }}></div>
         </div>
 
-        <button 
+        <button
           onClick={handleGoogleLogin}
-          className="btn" 
-          style={{ 
-            width: "100%", 
-            background: "rgba(255, 255, 255, 0.05)", 
+          className="btn"
+          style={{
+            width: "100%",
+            background: "rgba(255, 255, 255, 0.05)",
             border: "1px solid var(--glass-border)",
             display: "flex",
             gap: "0.75rem"

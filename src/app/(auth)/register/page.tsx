@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  createUserWithEmailAndPassword 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  sendEmailVerification
 } from "firebase/auth";
 import { auth } from "@/services/firebase/firebaseConfig";
 import { useRouter } from "next/navigation";
@@ -36,10 +37,24 @@ export default function RegisterPage() {
     }
     setLoading(true);
     setError("");
+    // try {
+    //   await createUserWithEmailAndPassword(auth, email, password);
+    //   router.push("/dashboard");
+    // } 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
-    } catch (err: any) {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // 🔥 ADD THIS LINE
+      await sendEmailVerification(userCredential.user);
+
+      // Optional: show message instead of direct redirect
+      alert("Verification email sent. Please check your inbox.");
+
+      // You can still redirect (or send to a verify page)
+      router.push("/login");
+
+    }
+    catch (err: any) {
       setError(err.message || "Failed to create an account.");
     } finally {
       setLoading(false);
@@ -47,10 +62,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{ 
-      minHeight: "100vh", 
-      display: "flex", 
-      alignItems: "center", 
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
       justifyContent: "center",
       padding: "1rem"
     }}>
@@ -61,10 +76,10 @@ export default function RegisterPage() {
         </div>
 
         {error && (
-          <div style={{ 
-            padding: "0.75rem", 
-            background: "rgba(239, 68, 68, 0.1)", 
-            color: "var(--error)", 
+          <div style={{
+            padding: "0.75rem",
+            background: "rgba(239, 68, 68, 0.1)",
+            color: "var(--error)",
             borderRadius: "var(--radius-md)",
             marginBottom: "1rem",
             fontSize: "0.875rem",
@@ -77,8 +92,8 @@ export default function RegisterPage() {
         <form onSubmit={handleEmailRegister} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
@@ -96,8 +111,8 @@ export default function RegisterPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -115,8 +130,8 @@ export default function RegisterPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Confirm Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
@@ -132,9 +147,9 @@ export default function RegisterPage() {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={loading}
             style={{ marginTop: "0.5rem" }}
           >
@@ -148,12 +163,12 @@ export default function RegisterPage() {
           <div style={{ flex: 1, height: "1px", background: "var(--glass-border)" }}></div>
         </div>
 
-        <button 
+        <button
           onClick={handleGoogleLogin}
-          className="btn" 
-          style={{ 
-            width: "100%", 
-            background: "rgba(255, 255, 255, 0.05)", 
+          className="btn"
+          style={{
+            width: "100%",
+            background: "rgba(255, 255, 255, 0.05)",
             border: "1px solid var(--glass-border)",
             display: "flex",
             gap: "0.75rem"
