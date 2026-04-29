@@ -4,15 +4,18 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Calendar, CheckCircle, MapPin, User as UserIcon, X, Languages } from "lucide-react";
+import { LogOut, Calendar, CheckCircle, MapPin, User as UserIcon, X, Languages, FileText, Bell, TrendingUp } from "lucide-react";
 import Assistant from "@/components/features/Assistant";
 import EligibilityChecker from "@/components/features/EligibilityChecker";
 import PollingLocator from "@/components/features/PollingLocator";
+import ElectionsModule from "@/components/features/ElectionsModule";
+import GuidesModule from "@/components/features/GuidesModule";
+import ProfileModule from "@/components/features/ProfileModule";
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const { t, locale, setLocale } = useLanguage();
-  const [view, setView] = useState<"dashboard" | "eligibility" | "polling">("dashboard");
+  const [view, setView] = useState<"dashboard" | "eligibility" | "polling" | "elections" | "guides" | "profile">("dashboard");
   const router = useRouter();
 
   useEffect(() => {
@@ -70,6 +73,36 @@ export default function DashboardPage() {
           >
             <MapPin size={18} /> {t("polling_booths")}
           </button>
+          <button 
+            onClick={() => setView("elections")}
+            style={{ 
+              background: view === "elections" ? "rgba(79, 70, 229, 0.1)" : "none", 
+              color: view === "elections" ? "var(--primary)" : "inherit", 
+              padding: "0.75rem", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", gap: "0.75rem", border: "none", cursor: "pointer", width: "100%", fontWeight: view === "elections" ? 600 : 400 
+            }}
+          >
+            <Calendar size={18} /> Elections Center
+          </button>
+          <button 
+            onClick={() => setView("guides")}
+            style={{ 
+              background: view === "guides" ? "rgba(79, 70, 229, 0.1)" : "none", 
+              color: view === "guides" ? "var(--primary)" : "inherit", 
+              padding: "0.75rem", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", gap: "0.75rem", border: "none", cursor: "pointer", width: "100%", fontWeight: view === "guides" ? 600 : 400 
+            }}
+          >
+            <FileText size={18} /> Guides & Checklists
+          </button>
+          <button 
+            onClick={() => setView("profile")}
+            style={{ 
+              background: view === "profile" ? "rgba(79, 70, 229, 0.1)" : "none", 
+              color: view === "profile" ? "var(--primary)" : "inherit", 
+              padding: "0.75rem", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", gap: "0.75rem", border: "none", cursor: "pointer", width: "100%", fontWeight: view === "profile" ? 600 : 400 
+            }}
+          >
+            <UserIcon size={18} /> My Profile
+          </button>
         </nav>
 
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -118,10 +151,28 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {view === "elections" && (
+          <div style={{ padding: "1rem 0" }}>
+            <ElectionsModule />
+          </div>
+        )}
+
+        {view === "guides" && (
+          <div style={{ padding: "1rem 0" }}>
+            <GuidesModule />
+          </div>
+        )}
+
+        {view === "profile" && (
+          <div style={{ padding: "1rem 0" }}>
+            <ProfileModule />
+          </div>
+        )}
+
         {view === "dashboard" && (
           <>
             {/* Stats Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
               <div className="glass card">
                 <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <Calendar size={20} color="var(--primary)" /> Upcoming Elections
@@ -155,6 +206,51 @@ export default function DashboardPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ opacity: 0.7 }}>Last Voted</span>
                     <span style={{ opacity: 0.7 }}>May 2024</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass card" style={{ background: "linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(16, 185, 129, 0.05))" }}>
+                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <TrendingUp size={20} color="var(--primary)" /> Insights
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                  <div>
+                    <span style={{ fontSize: "2rem", fontWeight: 700, color: "var(--primary)" }}>58</span>
+                    <span style={{ fontSize: "0.875rem", opacity: 0.7, marginLeft: "0.5rem" }}>Days until next election</span>
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.875rem" }}>
+                      <span>Civic Participation Score</span>
+                      <span style={{ color: "var(--success)", fontWeight: 600 }}>High (80%)</span>
+                    </div>
+                    <div style={{ height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+                      <div style={{ width: "80%", height: "100%", background: "var(--success)" }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Announcements Section */}
+            <div className="glass card" style={{ marginBottom: "2.5rem", borderLeft: "4px solid var(--warning)" }}>
+              <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Bell size={20} color="var(--warning)" /> Important Announcements
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", background: "rgba(245, 158, 11, 0.05)", borderRadius: "var(--radius-md)" }}>
+                  <div>
+                    <h4 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>Registration Deadline Approaching</h4>
+                    <p style={{ fontSize: "0.875rem", opacity: 0.8 }}>You have 14 days left to register for the General Municipal Election.</p>
+                  </div>
+                  <button className="btn" style={{ background: "var(--warning)", color: "#000", border: "none", fontWeight: 600, padding: "0.5rem 1rem", fontSize: "0.875rem", cursor: "pointer" }}>
+                    Register Now
+                  </button>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)" }}>
+                  <div>
+                    <h4 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>New Polling Booth Added</h4>
+                    <p style={{ fontSize: "0.875rem", opacity: 0.8 }}>A new polling location has been added in District 4. Check the locator to see if it's closer to you.</p>
                   </div>
                 </div>
               </div>

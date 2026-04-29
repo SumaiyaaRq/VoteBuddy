@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Send, X, Bot, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "@/context/LocationContext";
 
 interface Message {
   id: string;
@@ -23,6 +24,8 @@ export default function Assistant() {
     },
   ]);
 
+  const { location } = useLocation();
+
   const handleSend = () => {
     if (!input.trim()) return;
 
@@ -36,17 +39,21 @@ export default function Assistant() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    // Simple neutral logic/mock response
+    // Context-aware logic/mock response
     setTimeout(() => {
       let botResponse = "I'm sorry, I only have factual information about election processes. Could you please rephrase your question or ask about registration, eligibility, or polling locations?";
       
       const lowerInput = input.toLowerCase();
       if (lowerInput.includes("eligibility") || lowerInput.includes("can i vote")) {
-        botResponse = "To be eligible to vote, you typically need to be at least 18 years old and a citizen of the country. Specific rules vary by location. Would you like to use our Eligibility Checker tool?";
+        botResponse = "To be eligible to vote, you typically need to be at least 18 years old and a citizen of the country. Specific rules vary by location. Have you checked out the Eligibility Checker on your dashboard?";
       } else if (lowerInput.includes("register")) {
-        botResponse = "Voter registration is the first step! You can usually register online, by mail, or in person at your local election office. Would you like me to find the registration link for your area?";
-      } else if (lowerInput.includes("polling") || lowerInput.includes("where to vote")) {
-        botResponse = "I can help you find your nearest polling station. Please provide your zip code or address, or use our Polling Locator tool on the dashboard.";
+        botResponse = "Voter registration is the first step! You can usually register online, by mail, or in person. Check the 'Guides & Checklists' tab for a direct link to official government portals like vote.gov.";
+      } else if (lowerInput.includes("polling") || lowerInput.includes("where to vote") || lowerInput.includes("location")) {
+        if (location.city) {
+            botResponse = `I see you are located near ${location.city}${location.state ? `, ${location.state}` : ''}. You can use the 'Polling Booths' tab to find the nearest locations specifically for your area.`;
+        } else {
+            botResponse = "I can help you find your nearest polling station! Please provide your zip code or address in the 'Polling Booths' tab on the dashboard, or allow GPS access to automatically find locations near you.";
+        }
       }
 
       const botMsg: Message = {
@@ -64,6 +71,7 @@ export default function Assistant() {
       {/* Floating Trigger */}
       <button 
         onClick={() => setIsOpen(true)}
+        aria-label="Open AI Assistant"
         className="btn btn-primary" 
         style={{ 
           position: "fixed", 
@@ -109,7 +117,7 @@ export default function Assistant() {
                   <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>Online & Neutral</span>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
+              <button onClick={() => setIsOpen(false)} aria-label="Close Assistant" style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}>
                 <X size={20} />
               </button>
             </div>
@@ -162,6 +170,7 @@ export default function Assistant() {
               />
               <button 
                 onClick={handleSend}
+                aria-label="Send message"
                 className="btn btn-primary" 
                 style={{ padding: "0 1rem" }}
               >

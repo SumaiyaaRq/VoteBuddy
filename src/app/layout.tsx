@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { LocationProvider } from "@/context/LocationContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,6 +13,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VoteBuddy | Your Intelligent Election Assistant",
   description: "Navigate the election process with ease. Get personalized voting guidance, find polling stations, and check eligibility.",
+  manifest: "/manifest.json",
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
@@ -24,7 +27,9 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <LanguageProvider>
-            <main>{children}</main>
+            <LocationProvider>
+              <main>{children}</main>
+            </LocationProvider>
           </LanguageProvider>
         </AuthProvider>
       </body>

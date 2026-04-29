@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import {
   signInWithPopup,
   GoogleAuthProvider,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  sendEmailVerification
 } from "firebase/auth";
 import { auth } from "@/services/firebase/firebaseConfig";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
   const router = useRouter();
 
   const handleGoogleLogin = async () => {
@@ -32,17 +35,17 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // try {
-    //   await signInWithEmailAndPassword(auth, email, password);
-    //   router.push("/dashboard");
-    // } 
+    setResendMessage("");
+    setShowResend(false);
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-
       if (!user.emailVerified) {
         setError("Please verify your email before logging in.");
+        setShowResend(true);
+        setLoading(false);
         return;
       }
 
@@ -53,6 +56,18 @@ export default function LoginPage() {
       setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!auth.currentUser) return;
+    try {
+      await sendEmailVerification(auth.currentUser);
+      setResendMessage("Verification email sent! Please check your inbox.");
+      setShowResend(false);
+      setError("");
+    } catch (err: any) {
+      setError(err.message || "Failed to send verification email.");
     }
   };
 
@@ -78,9 +93,34 @@ export default function LoginPage() {
             borderRadius: "var(--radius-md)",
             marginBottom: "1rem",
             fontSize: "0.875rem",
-            border: "1px solid rgba(239, 68, 68, 0.2)"
+            border: "1px solid rgba(239, 68, 68, 0.2)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem"
           }}>
             {error}
+            {showResend && (
+              <button 
+                onClick={handleResendVerification}
+                style={{ alignSelf: "flex-start", background: "none", border: "none", color: "var(--error)", fontWeight: 600, cursor: "pointer", padding: 0, fontSize: "0.875rem", textDecoration: "underline" }}
+              >
+                Resend Verification Email
+              </button>
+            )}
+          </div>
+        )}
+
+        {resendMessage && (
+          <div style={{
+            padding: "0.75rem",
+            background: "rgba(16, 185, 129, 0.1)",
+            color: "var(--success)",
+            borderRadius: "var(--radius-md)",
+            marginBottom: "1rem",
+            fontSize: "0.875rem",
+            border: "1px solid rgba(16, 185, 129, 0.2)"
+          }}>
+            {resendMessage}
           </div>
         )}
 
@@ -105,7 +145,10 @@ export default function LoginPage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Password</label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label style={{ fontSize: "0.875rem", fontWeight: 500 }}>Password</label>
+              <Link href="/forgot-password" style={{ fontSize: "0.75rem", color: "var(--primary)" }}>Forgot password?</Link>
+            </div>
             <input
               type="password"
               value={password}
