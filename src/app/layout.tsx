@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "VoteBuddy | Your Intelligent Election Assistant",
   description: "Navigate the election process with ease. Get personalized voting guidance, find polling stations, and check eligibility.",
   manifest: "/manifest.json",
+};
+
+export const viewport = {
   themeColor: "#4f46e5",
 };
 
