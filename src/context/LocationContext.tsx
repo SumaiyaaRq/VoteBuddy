@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { logger } from "@/services/logger";
 
 interface LocationData {
   city: string;
@@ -30,6 +31,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(false);
 
   const requestGPS = () => {
+    logger.info("Requesting GPS location");
     setLoading(true);
     setError(null);
     if (!navigator.geolocation) {
@@ -51,12 +53,25 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           method: "gps",
         });
         setLoading(false);
+        logger.info("GPS Location retrieved", { city: "San Francisco", state: "CA" });
       },
       (err) => {
-        setError("Unable to retrieve your location. Please enter it manually.");
+        const errorMsg = "Unable to retrieve your location. Please enter it manually.";
+        setError(errorMsg);
         setLoading(false);
+        logger.warn("GPS Location failed", { error: err.message });
       }
     );
+  };
+
+  const setManualLocation = (city: string, state: string) => {
+    logger.info("Setting manual location", { city, state });
+    setLocation({
+      city,
+      state,
+      coordinates: null,
+      method: "manual"
+    });
   };
 
   return (

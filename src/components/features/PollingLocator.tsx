@@ -1,8 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, MapPin, Navigation, Info, ExternalLink, Crosshair, AlertCircle } from "lucide-react";
+import { Search, MapPin, Navigation, Info, ExternalLink, Crosshair, AlertCircle, AlertTriangle } from "lucide-react";
 import { useLocation } from "@/context/LocationContext";
+import { GlassCard } from "../ui/GlassCard";
+import { ActionButton } from "../ui/ActionButton";
+import { StatusBadge } from "../ui/StatusBadge";
+import { logger } from "@/services/logger";
 
 interface Station {
   id: string;
@@ -31,12 +35,14 @@ export default function PollingLocator() {
     if (!query) return;
     setSearching(true);
     setHasSearched(true);
+    logger.info("Polling Station Search", { query });
     
     // Simulate API call
     setTimeout(() => {
       // Mock "No Results" scenario for specific inputs
       if (query.toLowerCase().includes("nowhere") || query === "00000") {
         setStations([]);
+        logger.warn("No stations found for query", { query });
       } else {
         setStations([
           { id: "1", name: "Central High School", address: "123 Education Way, Springfield", distance: "0.8 miles", isOpen: true },
@@ -45,7 +51,7 @@ export default function PollingLocator() {
         ]);
       }
       setSearching(false);
-    }, 1500);
+    }, 1200);
   };
 
   const handleManualSearch = (e: React.FormEvent) => {
@@ -103,30 +109,48 @@ export default function PollingLocator() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "1.5rem", minHeight: "500px" }}>
-        {/* Mock Map Container */}
+        {/* Map Container / Fallback */}
         <div className="glass card" style={{ 
           position: "relative", 
           overflow: "hidden", 
           background: "rgba(0, 0, 0, 0.2)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          padding: "2rem"
         }}>
-          <div style={{ textAlign: "center", zIndex: 1 }}>
-            <MapPin size={48} color="var(--primary)" style={{ marginBottom: "1rem" }} />
-            <p style={{ maxWidth: "300px", opacity: 0.7 }}>
-              {location.coordinates 
-                ? `Map centered on ${location.city || "your location"} (${location.coordinates.lat.toFixed(2)}, ${location.coordinates.lng.toFixed(2)})`
-                : "Interactive Google Map will be integrated here."}
-            </p>
-          </div>
-          {/* Map Grid Pattern */}
+          {stations.length > 0 ? (
+            <>
+              <div style={{ position: "absolute", inset: 0, opacity: 0.15, background: "url('https://maps.googleapis.com/maps/api/staticmap?center=Springfield&zoom=13&size=600x600&key=MOCK_KEY') center/cover" }} />
+              <div style={{ textAlign: "center", zIndex: 1 }}>
+                <MapPin size={48} color="var(--primary)" style={{ marginBottom: "1rem" }} />
+                <h4 style={{ marginBottom: "0.5rem" }}>Nearby Stations Ready</h4>
+                <p style={{ maxWidth: "300px", opacity: 0.7, fontSize: "0.875rem" }}>
+                  Interactive Google Map is currently in demonstration mode. Use the list to navigate to specific locations.
+                </p>
+                <div style={{ marginTop: "1.5rem" }}>
+                   <ActionButton onClick={() => window.open(`https://www.google.com/maps/search/polling+stations+near+${location.city}`, "_blank")} variant="secondary" size="sm">
+                     Open in Google Maps <ExternalLink size={14} />
+                   </ActionButton>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", zIndex: 1 }}>
+              <AlertTriangle size={48} color="var(--warning)" style={{ marginBottom: "1rem", opacity: 0.5 }} />
+              <p style={{ maxWidth: "300px", opacity: 0.5 }}>
+                Enter your location to see nearby polling stations on the map.
+              </p>
+            </div>
+          )}
+          {/* Map Grid Pattern Overlay */}
           <div style={{ 
             position: "absolute", 
             inset: 0, 
-            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
             backgroundSize: "40px 40px",
-            opacity: 0.3
+            pointerEvents: "none"
           }} />
         </div>
 
@@ -161,32 +185,31 @@ export default function PollingLocator() {
           )}
 
           {stations.map(station => (
-            <div key={station.id} className="glass card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <GlassCard key={station.id} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <h5 style={{ fontSize: "1rem", fontWeight: 600 }}>{station.name}</h5>
-                <span style={{ 
-                  fontSize: "0.75rem", 
-                  padding: "0.25rem 0.5rem", 
-                  borderRadius: "var(--radius-full)",
-                  background: station.isOpen ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                  color: station.isOpen ? "var(--success)" : "var(--error)"
-                }}>
-                  {station.isOpen ? "Open" : "Closed"}
-                </span>
+                <StatusBadge 
+                  label={station.isOpen ? "Open" : "Closed"} 
+                  variant={station.isOpen ? "success" : "error"} 
+                  size="sm" 
+                />
               </div>
               <p style={{ fontSize: "0.875rem", opacity: 0.7 }}>{station.address}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 500 }}>{station.distance}</span>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--primary)" }}>{station.distance}</span>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button className="btn" style={{ padding: "0.4rem", background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--glass-border)" }}>
+                  <ActionButton 
+                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(station.address)}`, "_blank")} 
+                    variant="secondary" 
+                    size="sm" 
+                    style={{ padding: "0.4rem" }}
+                    ariaLabel={`Get directions to ${station.name}`}
+                  >
                     <Navigation size={16} />
-                  </button>
-                  <button className="btn" style={{ padding: "0.4rem", background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--glass-border)" }}>
-                    <ExternalLink size={16} />
-                  </button>
+                  </ActionButton>
                 </div>
               </div>
-            </div>
+            </GlassCard>
           ))}
         </div>
       </div>

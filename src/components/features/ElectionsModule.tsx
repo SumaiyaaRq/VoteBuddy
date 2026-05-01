@@ -1,7 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, MapPin, Search, Filter, Clock, CheckCircle } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Calendar, MapPin, Search, Filter, Clock, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
+import { GlassCard } from "../ui/GlassCard";
+import { StatusBadge } from "../ui/StatusBadge";
+import { ActionButton } from "../ui/ActionButton";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/services/firebase/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { UserProfile } from "@/types";
 
 // Mock Data
 const upcomingElections = [
@@ -47,21 +54,43 @@ const pastElections = [
 ];
 
 export default function ElectionsModule() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
 
-  const filteredUpcoming = upcomingElections.filter(e => {
-    const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) || e.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "All" || e.type === filterType;
-    return matchesSearch && matchesType;
-  });
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setProfile(docSnap.data() as UserProfile);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
-  const filteredPast = pastElections.filter(e => {
+  const calculateDaysLeft = (deadline: string) => {
+    const dead = new Date(deadline);
+    const today = new Date();
+    const diff = dead.getTime() - today.getTime();
+    return Math.ceil(diff / (1000 * 3600 * 24));
+  };
+
+  const filteredUpcoming = useMemo(() => upcomingElections.filter(e => {
+    const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) || e.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === "All" || e.type === filterType;
+    const matchesState = !profile?.state || e.location === "Citywide" || e.location.includes(profile.state);
+    return matchesSearch && matchesType && matchesState;
+  }), [searchTerm, filterType, profile]);
+
+  const filteredPast = useMemo(() => pastElections.filter(e => {
     const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) || e.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "All" || e.type === filterType;
     return matchesSearch && matchesType;
-  });
+  }), [searchTerm, filterType]);
 
   return (
     <div className="glass card" style={{ padding: "2rem" }}>
@@ -146,37 +175,52 @@ export default function ElectionsModule() {
       </div>
 
       {activeTab === "upcoming" && (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          {filteredUpcoming.length > 0 ? filteredUpcoming.map(election => (
-            <div key={election.id} style={{ padding: "1.5rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--glass-border)", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-                <div>
-                  <h3 style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>{election.title}</h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", opacity: 0.7, fontSize: "0.875rem", flexWrap: "wrap" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><Calendar size={14} /> {election.date}</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><MapPin size={14} /> {election.location}</span>
-                    <span style={{ background: "rgba(255,255,255,0.1)", padding: "0.1rem 0.5rem", borderRadius: "1rem" }}>{election.type}</span>
+        <div style={{ display: "grid", gap: "1.5rem" }}>
+          {filteredUpcoming.length > 0 ? filteredUpcoming.map(election => {
+            const daysLeft = calculateDaysLeft(election.registrationDeadline);
+            return (
+              <GlassCard key={election.id} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+                  <div>
+                    <h3 style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>{election.title}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", opacity: 0.7, fontSize: "0.875rem", flexWrap: "wrap" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><Calendar size={14} /> {election.date}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><MapPin size={14} /> {election.location}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+                    <StatusBadge label={election.status} variant={election.status.includes("Open") ? "success" : "info"} />
+                    <StatusBadge label={election.type} variant="neutral" />
                   </div>
                 </div>
-                <span style={{
-                  background: election.status.includes("Open") ? "rgba(16, 185, 129, 0.1)" : "rgba(79, 70, 229, 0.1)",
-                  color: election.status.includes("Open") ? "var(--success)" : "var(--primary)",
-                  padding: "0.25rem 0.75rem",
-                  borderRadius: "var(--radius-full)",
-                  fontSize: "0.875rem",
-                  fontWeight: 500
-                }}>
-                  {election.status}
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "var(--warning)" }}>
-                <Clock size={16} />
-                Registration Deadline: {election.registrationDeadline}
-              </div>
-            </div>
-          )) : (
-            <div style={{ textAlign: "center", padding: "3rem", opacity: 0.5 }}>
-              <p>No upcoming elections found matching your criteria.</p>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(245, 158, 11, 0.05)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid rgba(245, 158, 11, 0.1)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: daysLeft < 30 ? "var(--error)" : "var(--warning)" }}>
+                    <Clock size={16} />
+                    <span>Registration Deadline: <strong>{election.registrationDeadline}</strong></span>
+                  </div>
+                  {daysLeft > 0 && (
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      {daysLeft} Days Left
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+                  <ActionButton onClick={() => window.open("https://vote.gov", "_blank")} size="sm" variant="primary">
+                    Register Now <ExternalLink size={14} />
+                  </ActionButton>
+                  <ActionButton onClick={() => {}} size="sm" variant="secondary">
+                    View Ballot Details
+                  </ActionButton>
+                </div>
+              </GlassCard>
+            );
+          }) : (
+            <div style={{ textAlign: "center", padding: "4rem", opacity: 0.5 }}>
+              <AlertTriangle size={48} style={{ margin: "0 auto 1rem" }} />
+              <p>No upcoming elections found for {profile?.state || "your area"}.</p>
+              <p style={{ fontSize: "0.875rem" }}>Try adjusting your location in your profile.</p>
             </div>
           )}
         </div>

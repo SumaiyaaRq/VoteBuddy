@@ -3,21 +3,38 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useRouter } from "next/navigation";
-import { LogOut, Calendar, CheckCircle, MapPin, User as UserIcon, X, Languages, FileText, Bell, TrendingUp } from "lucide-react";
-import Assistant from "@/components/features/Assistant";
-import EligibilityChecker from "@/components/features/EligibilityChecker";
-import PollingLocator from "@/components/features/PollingLocator";
-import ElectionsModule from "@/components/features/ElectionsModule";
-import GuidesModule from "@/components/features/GuidesModule";
-import ProfileModule from "@/components/features/ProfileModule";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LogOut, Calendar, CheckCircle, MapPin, User as UserIcon, X, Languages, FileText, Bell, TrendingUp, ChevronRight } from "lucide-react";
+import dynamic from "next/dynamic";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { ActionButton } from "@/components/ui/ActionButton";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { logger } from "@/services/logger";
+import { Suspense } from "react";
 
-export default function DashboardPage() {
+// Dynamic imports for performance
+const Assistant = dynamic(() => import("@/components/features/Assistant"), { ssr: false });
+const EligibilityChecker = dynamic(() => import("@/components/features/EligibilityChecker"));
+const PollingLocator = dynamic(() => import("@/components/features/PollingLocator"));
+const ElectionsModule = dynamic(() => import("@/components/features/ElectionsModule"));
+const GuidesModule = dynamic(() => import("@/components/features/GuidesModule"));
+const ProfileModule = dynamic(() => import("@/components/features/ProfileModule"));
+const VotingJourney = dynamic(() => import("@/components/features/VotingJourney"));
+
+function DashboardContent() {
   const { user, loading, logout } = useAuth();
   const { t, locale, setLocale } = useLanguage();
-  const [view, setView] = useState<"dashboard" | "eligibility" | "polling" | "elections" | "guides" | "profile">("dashboard");
+  const searchParams = useSearchParams();
+  const initialView = searchParams.get("view") as any || "dashboard";
+  const [view, setView] = useState<"dashboard" | "eligibility" | "polling" | "elections" | "guides" | "profile" | "journey">(initialView);
   const router = useRouter();
 
+  useEffect(() => {
+    const v = searchParams.get("view");
+    if (v && ["dashboard", "eligibility", "polling", "elections", "guides", "profile", "journey"].includes(v)) {
+      setView(v as any);
+    }
+  }, [searchParams]);
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -52,6 +69,16 @@ export default function DashboardPage() {
             }}
           >
             <Calendar size={18} /> {t("dashboard")}
+          </button>
+          <button 
+            onClick={() => { setView("journey"); logger.trackAction("View Switch", { to: "journey" }); }}
+            style={{ 
+              background: view === "journey" ? "rgba(79, 70, 229, 0.1)" : "none", 
+              color: view === "journey" ? "var(--primary)" : "inherit", 
+              padding: "0.75rem", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", gap: "0.75rem", border: "none", cursor: "pointer", width: "100%", fontWeight: view === "journey" ? 600 : 400 
+            }}
+          >
+            <TrendingUp size={18} /> Voting Journey
           </button>
           <button 
             onClick={() => setView("eligibility")}
@@ -169,11 +196,27 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {view === "journey" && (
+          <div style={{ padding: "1rem 0" }}>
+            <VotingJourney />
+          </div>
+        )}
+
         {view === "dashboard" && (
           <>
             {/* Stats Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
-              <div className="glass card">
+              <GlassCard style={{ display: "flex", flexDirection: "column", gap: "1.5rem", background: "linear-gradient(135deg, var(--primary), #7c3aed)", color: "white", border: "none" }}>
+                <div>
+                  <h3 style={{ marginBottom: "0.5rem", color: "white" }}>Ready to Vote?</h3>
+                  <p style={{ fontSize: "0.875rem", opacity: 0.9 }}>Complete your guided voting journey to ensure you have everything needed for election day.</p>
+                </div>
+                <ActionButton onClick={() => setView("journey")} variant="secondary" style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white" }}>
+                  Start Your Journey <ChevronRight size={18} />
+                </ActionButton>
+              </GlassCard>
+
+              <GlassCard>
                 <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <Calendar size={20} color="var(--primary)" /> Upcoming Elections
                 </h3>
@@ -181,55 +224,32 @@ export default function DashboardPage() {
                   <div style={{ padding: "1rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--glass-border)" }}>
                     <h4 style={{ marginBottom: "0.25rem" }}>General Municipal Election</h4>
                     <p style={{ fontSize: "0.875rem", opacity: 0.6 }}>November 4, 2026 • Local</p>
-                    <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", background: "rgba(16, 185, 129, 0.1)", color: "var(--success)", padding: "0.25rem 0.5rem", borderRadius: "var(--radius-full)" }}>
-                        Open for Registration
-                      </span>
+                    <div style={{ marginTop: "1rem" }}>
+                      <StatusBadge label="Open for Registration" variant="success" />
                     </div>
                   </div>
                 </div>
-              </div>
+              </GlassCard>
 
-              <div className="glass card">
+              <GlassCard>
                 <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <CheckCircle size={20} color="var(--success)" /> Your Status
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ opacity: 0.7 }}>Registration Status</span>
-                    <span style={{ color: "var(--success)", fontWeight: 600 }}>Active</span>
+                    <span style={{ opacity: 0.7 }}>Registration</span>
+                    <StatusBadge label="Active" variant="success" />
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ opacity: 0.7 }}>Eligibility</span>
-                    <span style={{ color: "var(--success)", fontWeight: 600 }}>Verified</span>
+                    <StatusBadge label="Verified" variant="success" />
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ opacity: 0.7 }}>Last Voted</span>
-                    <span style={{ opacity: 0.7 }}>May 2024</span>
+                    <span style={{ opacity: 0.7 }}>Days to Vote</span>
+                    <span style={{ fontWeight: 700, color: "var(--primary)" }}>58</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="glass card" style={{ background: "linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(16, 185, 129, 0.05))" }}>
-                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <TrendingUp size={20} color="var(--primary)" /> Insights
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                  <div>
-                    <span style={{ fontSize: "2rem", fontWeight: 700, color: "var(--primary)" }}>58</span>
-                    <span style={{ fontSize: "0.875rem", opacity: 0.7, marginLeft: "0.5rem" }}>Days until next election</span>
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.875rem" }}>
-                      <span>Civic Participation Score</span>
-                      <span style={{ color: "var(--success)", fontWeight: 600 }}>High (80%)</span>
-                    </div>
-                    <div style={{ height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
-                      <div style={{ width: "80%", height: "100%", background: "var(--success)" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </GlassCard>
             </div>
 
             {/* Announcements Section */}
@@ -298,5 +318,17 @@ export default function DashboardPage() {
       {/* Floating Assistant */}
       <Assistant />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "40px", height: "40px", border: "3px solid var(--glass-border)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, CheckSquare, Info, ExternalLink, ChevronRight, CheckCircle } from "lucide-react";
+import { FileText, CheckSquare, Info, ExternalLink, ChevronRight, CheckCircle, Clock, MapPin, UserCheck } from "lucide-react";
+import { GlassCard } from "../ui/GlassCard";
+import { StatusBadge } from "../ui/StatusBadge";
+import { logger } from "@/services/logger";
 
 export default function GuidesModule() {
   const [activeGuide, setActiveGuide] = useState<"registration" | "process" | "checklist">("registration");
@@ -15,7 +18,9 @@ export default function GuidesModule() {
   });
 
   const toggleCheck = (key: keyof typeof checklist) => {
-    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
+    const newState = !checklist[key];
+    setChecklist(prev => ({ ...prev, [key]: newState }));
+    logger.trackAction("Checklist Item Toggled", { item: key, state: newState });
   };
 
   return (
@@ -99,34 +104,40 @@ export default function GuidesModule() {
 
       {activeGuide === "process" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div style={{ padding: "1.5rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--glass-border)" }}>
-            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Before Voting Day</h3>
-            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", opacity: 0.8 }}>
-              <li>Research the candidates and ballot measures.</li>
-              <li>Locate your assigned polling booth using our locator.</li>
-              <li>Check the operating hours of your polling booth.</li>
+          <GlassCard style={{ background: "rgba(79, 70, 229, 0.03)" }}>
+            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Clock size={20} color="var(--primary)" /> Before Voting Day
+            </h3>
+            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem", opacity: 0.8 }}>
+              <li>Research the candidates and ballot measures in your local district.</li>
+              <li>Locate your assigned polling booth and check its specific hours.</li>
+              <li>Verify your registration status one last time (at least 30 days before).</li>
+              <li>Decide if you will vote by mail or in person.</li>
             </ul>
-          </div>
+          </GlassCard>
 
-          <div style={{ padding: "1.5rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--glass-border)" }}>
-            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>At the Polling Booth</h3>
-            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", opacity: 0.8 }}>
-              <li>Join the queue and wait for your turn.</li>
-              <li>Present your valid ID to the election official.</li>
-              <li>Proceed to the voting machine or booth.</li>
-              <li>Follow the instructions to cast your vote securely.</li>
-              <li>Verify your selections before final submission.</li>
+          <GlassCard style={{ background: "rgba(16, 185, 129, 0.03)" }}>
+            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <MapPin size={20} color="var(--success)" /> At the Polling Booth
+            </h3>
+            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem", opacity: 0.8 }}>
+              <li>Bring your valid photo ID and proof of residency.</li>
+              <li>If you're in line before the polls close, you are entitled to vote.</li>
+              <li>Don't hesitate to ask election officials for help with machines.</li>
+              <li>Review your ballot choices carefully before submitting.</li>
             </ul>
-          </div>
+          </GlassCard>
           
-          <div style={{ padding: "1.5rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--glass-border)" }}>
-            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>After Voting</h3>
-            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", opacity: 0.8 }}>
-              <li>Collect any receipt or "I Voted" sticker if provided.</li>
-              <li>Exit the premises promptly to allow others to vote.</li>
-              <li>Track election results through our Elections Center.</li>
+          <GlassCard style={{ background: "rgba(59, 130, 246, 0.03)" }}>
+            <h3 style={{ fontSize: "1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <UserCheck size={20} color="var(--info)" /> After Voting
+            </h3>
+            <ul style={{ paddingLeft: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem", opacity: 0.8 }}>
+              <li>Wear your "I Voted" sticker with pride!</li>
+              <li>Check official results through verified government portals.</li>
+              <li>Results can take time to be certified—patience is key to democracy.</li>
             </ul>
-          </div>
+          </GlassCard>
         </div>
       )}
 

@@ -5,15 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/services/firebase/firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { User, Save, History, Calendar, MapPin, CreditCard, Activity, ShieldCheck } from "lucide-react";
+import { UserProfile } from "@/types";
 
-interface UserProfile {
-  fullName: string;
-  age: string;
-  city: string;
-  state: string;
-  voterId: string;
-  hasVotedLastElection: boolean;
-}
 
 export default function ProfileModule() {
   const { user } = useAuth();
@@ -23,7 +16,9 @@ export default function ProfileModule() {
     city: "",
     state: "",
     voterId: "",
-    hasVotedLastElection: false
+    hasVotedLastElection: false,
+    registrationStatus: "not_registered",
+    locationMethod: null
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,8 +52,26 @@ export default function ProfileModule() {
     e.preventDefault();
     if (!user) return;
     
+    const validate = () => {
+      if (profile.fullName.length < 2) {
+        setMessage({ text: "Name must be at least 2 characters.", type: "error" });
+        return false;
+      }
+      if (profile.age && (parseInt(profile.age) < 13 || parseInt(profile.age) > 120)) {
+        setMessage({ text: "Please enter a valid age (13-120).", type: "error" });
+        return false;
+      }
+      return true;
+    };
+
     setSaving(true);
     setMessage(null);
+
+    if (!validate()) {
+      setSaving(false);
+      return;
+    }
+
     try {
       const docRef = doc(db, "users", user.uid);
       await setDoc(docRef, profile, { merge: true });
@@ -210,6 +223,30 @@ export default function ProfileModule() {
                 outline: "none"
               }}
             />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label style={{ fontSize: "0.875rem", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              <ShieldCheck size={14} /> Registration Status
+            </label>
+            <select
+              name="registrationStatus"
+              value={profile.registrationStatus}
+              onChange={(e) => setProfile({ ...profile, registrationStatus: e.target.value as any })}
+              style={{
+                padding: "0.75rem",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--glass-border)",
+                background: "rgba(255, 255, 255, 0.03)",
+                color: "var(--foreground)",
+                outline: "none",
+                cursor: "pointer"
+              }}
+            >
+              <option value="not_registered" style={{ color: "#000" }}>Not Registered</option>
+              <option value="pending" style={{ color: "#000" }}>Pending Verification</option>
+              <option value="active" style={{ color: "#000" }}>Active / Registered</option>
+            </select>
           </div>
 
           <div style={{ borderTop: "1px solid var(--glass-border)", paddingTop: "1.5rem", marginTop: "0.5rem", display: "flex", justifyContent: "flex-end" }}>
