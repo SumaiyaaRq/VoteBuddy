@@ -160,7 +160,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <ActionButton onClick={() => {}} variant="primary" fullWidth disabled={loading} style={{ marginTop: "0.5rem" }}>
+          <ActionButton type="submit" variant="primary" fullWidth disabled={loading} style={{ marginTop: "0.5rem" }}>
             {loading ? "Signing in..." : "Sign In"}
           </ActionButton>
         </form>

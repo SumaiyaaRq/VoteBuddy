@@ -263,9 +263,14 @@ function DashboardContent() {
                     <h4 style={{ fontSize: "1rem", marginBottom: "0.25rem" }}>Registration Deadline Approaching</h4>
                     <p style={{ fontSize: "0.875rem", opacity: 0.8 }}>You have 14 days left to register for the General Municipal Election.</p>
                   </div>
-                  <button className="btn" style={{ background: "var(--warning)", color: "#000", border: "none", fontWeight: 600, padding: "0.5rem 1rem", fontSize: "0.875rem", cursor: "pointer" }}>
+                  <ActionButton 
+                    onClick={() => window.open("https://vote.gov", "_blank")} 
+                    variant="warning" 
+                    size="sm"
+                    style={{ background: "var(--warning)", color: "#000", border: "none" }}
+                  >
                     Register Now
-                  </button>
+                  </ActionButton>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-md)" }}>
                   <div>

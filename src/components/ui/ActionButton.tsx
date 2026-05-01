@@ -2,7 +2,8 @@ import React from "react";
 
 interface ActionButtonProps {
   children: React.ReactNode;
-  onClick: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "outline" | "danger" | "warning" | "success";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
@@ -18,6 +19,7 @@ interface ActionButtonProps {
 export const ActionButton: React.FC<ActionButtonProps> = ({ 
   children, 
   onClick, 
+  type = "button",
   variant = "primary", 
   size = "md",
   disabled = false,
@@ -60,6 +62,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
   return (
     <button 
+      type={type}
       onClick={onClick} 
       disabled={disabled}
       aria-label={ariaLabel}

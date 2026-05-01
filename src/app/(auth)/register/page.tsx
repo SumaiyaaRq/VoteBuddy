@@ -140,7 +140,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <ActionButton onClick={() => {}} variant="primary" fullWidth disabled={loading} style={{ marginTop: "0.5rem" }}>
+          <ActionButton type="submit" variant="primary" fullWidth disabled={loading} style={{ marginTop: "0.5rem" }}>
             {loading ? "Creating Account..." : "Sign Up"}
           </ActionButton>
         </form>

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { CheckCircle, AlertCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import { ActionButton } from "../ui/ActionButton";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -159,7 +160,12 @@ export default function EligibilityChecker() {
               <h2 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Registration Required</h2>
               <p style={{ opacity: 0.7 }}>You meet the basic requirements, but you need to register before you can vote.</p>
             </div>
-            <button className="btn btn-primary">Register Now</button>
+            <ActionButton 
+              onClick={() => window.open("https://vote.gov", "_blank")} 
+              variant="primary"
+            >
+              Register Now
+            </ActionButton>
             <button className="btn" onClick={() => setResult(null)} style={{ background: "none" }}>Go Back</button>
           </>
         )}
